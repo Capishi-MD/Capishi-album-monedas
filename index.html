@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
   <title>Capishi Album — Colección de Monedas USA</title>
   <style>
     :root {
@@ -805,6 +806,262 @@
         max-width: none;
       }
     }
+
+    /* =============== BOTÓN FLOTANTE DE CÁMARA (FAB) & PWA =============== */
+    .fab-camera {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+      color: #0f172a;
+      border: 2px solid #fde68a;
+      border-radius: 999px;
+      padding: 14px 22px;
+      font-weight: 900;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 12px 28px rgba(245, 158, 11, 0.45);
+      z-index: 950;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .fab-camera:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 16px 34px rgba(245, 158, 11, 0.6);
+    }
+
+    .fab-camera:active {
+      transform: scale(0.96);
+    }
+
+    .btn-install-pwa {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border: 1px solid #93c5fd;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    /* =============== MODAL DEL ESCÁNER DE CÁMARA =============== */
+    .scanner-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 13, 22, 0.92);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2500;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .scanner-modal.open {
+      display: flex;
+    }
+
+    .scanner-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 20px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .scanner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .scanner-header h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-close-scanner {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .camera-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .camera-viewport video,
+    .camera-viewport canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .coin-guide-ring {
+      position: absolute;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      border: 3px dashed var(--gold);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+      pointer-events: none;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10px;
+    }
+
+    .coin-guide-ring span {
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--gold-light);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 99px;
+      border: 1px solid var(--gold);
+    }
+
+    .camera-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn-cam-capture {
+      flex: 1;
+      background: var(--gold);
+      color: #0f172a;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 900;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-cam-secondary {
+      background: #090d16;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .scanner-QuickVerify {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .scanner-QuickVerify label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .scanner-results-list {
+      max-height: 195px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .scan-match-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .scan-match-card.owned {
+      border-color: var(--green);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .scan-match-card.missing {
+      border-color: var(--red);
+      background: rgba(244, 63, 94, 0.08);
+    }
+
+    .scan-match-info h4 {
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .scan-match-info p {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-scan-toggle {
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.76rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-scan-toggle.add {
+      background: var(--green);
+      color: #052e16;
+    }
+
+    .btn-scan-toggle.owned-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
   </style>
 </head>
 <body>
@@ -870,6 +1127,7 @@
 
       <div class="search-and-actions">
         <input type="text" id="search-box" class="search-input" placeholder="Buscar por año, estado, presidente..." oninput="renderAlbums()" />
+        <button class="btn-install-pwa" id="btn-install-pwa" onclick="installPWA()">📲 Instalar App</button>
         <button class="btn-action" onclick="exportBackup()" title="Descargar copia de seguridad">💾 Exportar</button>
         <button class="btn-action" onclick="resetToPdfState()" title="Reiniciar todos los álbumes en blanco (0 monedas)">🗑️ Vaciar Todo</button>
       </div>
@@ -886,6 +1144,48 @@
       <h3 id="modal-cover-title"></h3>
       <p id="modal-cover-sub"></p>
       <button class="btn-close-modal" onclick="closeCoverModal()">Cerrar</button>
+    </div>
+  </div>
+
+  
+  <!-- Botón flotante para abrir el Escáner de Cámara -->
+  <button class="fab-camera" onclick="openScannerModal()" title="Escanear y verificar moneda con la cámara">
+    <span>📷</span> Escanear Moneda
+  </button>
+
+  <!-- Modal del Escáner de Cámara -->
+  <div class="scanner-modal" id="scanner-modal" onclick="closeScannerModal()">
+    <div class="scanner-box" onclick="event.stopPropagation()">
+      <div class="scanner-header">
+        <h3>📷 Escáner de Monedas USA</h3>
+        <button class="btn-close-scanner" onclick="closeScannerModal()">✕</button>
+      </div>
+
+      <div class="camera-viewport">
+        <video id="camera-video" autoplay playsinline muted></video>
+        <canvas id="camera-canvas" style="display:none;"></canvas>
+        <div class="coin-guide-ring">
+          <span id="camera-status-pill">Centra tu moneda aquí</span>
+        </div>
+      </div>
+
+      <div class="camera-controls">
+        <button class="btn-cam-capture" id="btn-snap-coin" onclick="captureAndAnalyzeCoin()">
+          📸 Capturar Moneda
+        </button>
+        <button class="btn-cam-secondary" id="btn-retake-coin" onclick="resetCameraStream()" style="display:none;">
+          🔄 Otra foto
+        </button>
+        <button class="btn-cam-secondary" onclick="switchCameraFacing()" title="Cambiar entre cámara trasera y frontal">
+          🔁 Girar
+        </button>
+      </div>
+
+      <div class="scanner-QuickVerify">
+        <label for="scanner-input">🔍 Identificador rápido (escribe o dicta el año, estado o texto que ves en la moneda):</label>
+        <input type="text" id="scanner-input" class="search-input" placeholder="Ej: 2005 California, 1964 Kennedy, Maya Angelou..." oninput="runScannerMatcher()" />
+        <div class="scanner-results-list" id="scanner-results"></div>
+      </div>
     </div>
   </div>
 
@@ -1154,6 +1454,203 @@
     }
 
     loadLocalFallback();
+
+    // =============== LÓGICA DEL ESCÁNER DE CÁMARA Y PWA ===============
+    let cameraStream = null;
+    let useRearCamera = true;
+    let deferredInstallPrompt = null;
+
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW:', err));
+      });
+    }
+
+    // Capturar evento de instalación PWA en Android / Chrome
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const btnPwa = document.getElementById('btn-install-pwa');
+      if (btnPwa) btnPwa.style.display = 'inline-flex';
+    });
+
+    async function installPWA() {
+      if (!deferredInstallPrompt) {
+        showToast('ℹ️ En iPhone usa "Compartir > Agregar a pantalla de inicio"');
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        document.getElementById('btn-install-pwa').style.display = 'none';
+      }
+      deferredInstallPrompt = null;
+    }
+
+    async function startCameraStream() {
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      const pill = document.getElementById('camera-status-pill');
+      video.style.display = 'block';
+      canvas.style.display = 'none';
+      document.getElementById('btn-snap-coin').style.display = 'flex';
+      document.getElementById('btn-retake-coin').style.display = 'none';
+
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+      }
+
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: useRearCamera ? { ideal: 'environment' } : 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 960 }
+          },
+          audio: false
+        });
+        video.srcObject = cameraStream;
+        pill.textContent = 'Cámara activa • Centra la moneda';
+      } catch (err) {
+        console.warn('Error cámara:', err);
+        pill.textContent = '⚠️ Da permiso a la cámara en tu navegador';
+      }
+    }
+
+    function stopCameraStream() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+      }
+    }
+
+    function switchCameraFacing() {
+      useRearCamera = !useRearCamera;
+      startCameraStream();
+    }
+
+    function openScannerModal() {
+      document.getElementById('scanner-modal').classList.add('open');
+      startCameraStream();
+      runScannerMatcher();
+    }
+
+    function closeScannerModal() {
+      document.getElementById('scanner-modal').classList.remove('open');
+      stopCameraStream();
+    }
+
+    function captureAndAnalyzeCoin() {
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      const pill = document.getElementById('camera-status-pill');
+
+      if (!video.videoWidth) {
+        showToast('⚠️ Espera a que la cámara cargue la imagen');
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Analizar tono dominante en el centro de la moneda (cobre vs dorada vs plateada)
+      const cx = Math.floor(canvas.width / 2);
+      const cy = Math.floor(canvas.height / 2);
+      const sampleSize = 60;
+      const imgData = ctx.getImageData(Math.max(0, cx - sampleSize/2), Math.max(0, cy - sampleSize/2), sampleSize, sampleSize).data;
+      let rSum = 0, gSum = 0, bSum = 0, count = 0;
+      for (let i = 0; i < imgData.length; i += 4) {
+        rSum += imgData[i];
+        gSum += imgData[i+1];
+        bSum += imgData[i+2];
+        count++;
+      }
+      const rAvg = rSum / count;
+      const gAvg = gSum / count;
+      const bAvg = bSum / count;
+
+      let toneHint = 'Plateada (25¢, 10¢, 50¢ o 5¢)';
+      if (rAvg > bAvg + 35 && rAvg > gAvg + 18) {
+        toneHint = 'Tono Cobre / Dorado detectado (1¢ o $1)';
+      } else if (rAvg > bAvg + 22 && gAvg > bAvg + 15) {
+        toneHint = 'Tono Dorado detectado ($1 Dollar)';
+      }
+
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+      document.getElementById('btn-snap-coin').style.display = 'none';
+      document.getElementById('btn-retake-coin').style.display = 'inline-block';
+      pill.textContent = '📸 Capturada • ' + toneHint;
+
+      const input = document.getElementById('scanner-input');
+      input.focus();
+      showToast('📸 Foto congelada. Escribe el año o nombre que lees en tu moneda');
+    }
+
+    function resetCameraStream() {
+      startCameraStream();
+    }
+
+    function runScannerMatcher() {
+      const q = document.getElementById('scanner-input').value.trim().toLowerCase();
+      const resultsBox = document.getElementById('scanner-results');
+
+      if (!q) {
+        resultsBox.innerHTML = `<div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:8px;">Escribe arriba el año o nombre de la moneda capturada (ej. <b>1999 Delaware</b>, <b>2024 Celia</b>, <b>1943</b>) para saber al instante si te falta o ya la tienes.</div>`;
+        return;
+      }
+
+      const terms = q.split(/\s+/);
+      const matches = [];
+
+      albums.forEach(album => {
+        album.coins.forEach(coin => {
+          const hay = `${coin.name} ${coin.year} ${coin.sub} ${album.title} ${album.badge}`.toLowerCase();
+          const allMatch = terms.every(t => hay.includes(t));
+          if (allMatch) {
+            matches.push({ album, coin });
+          }
+        });
+      });
+
+      if (matches.length === 0) {
+        resultsBox.innerHTML = `<div style="font-size:0.8rem; color:#fda4af; text-align:center; padding:10px;">No se encontró ninguna moneda con "${q}".</div>`;
+        return;
+      }
+
+      let html = '';
+      matches.slice(0, 12).forEach(({ album, coin }) => {
+        const statusClass = coin.owned ? 'owned' : 'missing';
+        const statusTag = coin.owned
+          ? `<span style="color:var(--green); font-weight:800;">✅ YA LA TIENES</span>`
+          : `<span style="color:#fb7185; font-weight:800;">🎯 ¡TE FALTA!</span>`;
+        const btnText = coin.owned ? 'Desmarcar' : '¡Agregar al álbum!';
+        const btnClass = coin.owned ? 'owned-btn' : 'add';
+
+        html += `
+          <div class="scan-match-card ${statusClass}">
+            <div class="scan-match-info">
+              <h4>${coin.name} (${coin.year})</h4>
+              <p>${album.title} • ${statusTag}</p>
+            </div>
+            <button class="btn-scan-toggle ${btnClass}" onclick="toggleCoinFromScanner('${album.id}', '${coin.id}')">
+              ${btnText}
+            </button>
+          </div>
+        `;
+      });
+
+      resultsBox.innerHTML = html;
+    }
+
+    function toggleCoinFromScanner(albumId, coinId) {
+      toggleCoin(albumId, coinId);
+      runScannerMatcher();
+    }
+
   </script>
 
   <!-- =============== FIREBASE: LOGIN + LISTA BLANCA + SESIÓN ÚNICA =============== -->
