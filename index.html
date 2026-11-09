@@ -1159,7 +1159,6 @@
       <div class="scanner-header">
         <h3>📷 Escáner de Monedas USA</h3>
         <div style="display:flex; align-items:center; gap:8px;">
-          <button type="button" onclick="configureApiKey()" title="Configurar clave privada de Gemini API" style="background:rgba(245,158,11,0.15); border:1px solid var(--gold); color:var(--gold-light); font-size:0.75rem; font-weight:700; padding:4px 8px; border-radius:8px; cursor:pointer;">🔑 Clave IA</button>
           <button class="btn-close-scanner" onclick="closeScannerModal()">✕</button>
         </div>
       </div>
@@ -1649,7 +1648,7 @@
       } catch (err) {
         console.error('Gemini Vision Error:', err);
         pill.textContent = '⚠️ Error en reconocimiento IA. Puedes escribirla abajo:';
-        resultsBox.innerHTML = '<div style="font-size:0.8rem; color:#fda4af; text-align:center; padding:10px;">No se pudo conectar con la IA (' + err.message + ').<br/>Toca el botón "🔑 Clave IA" arriba para verificar o cambiar la clave.</div>';
+        resultsBox.innerHTML = '<div style="font-size:0.8rem; color:#fda4af; text-align:center; padding:10px;">No se pudo conectar con el servicio de IA (' + err.message + '). Revisa la configuración del Worker de Cloudflare.</div>';
       }
     }
 
