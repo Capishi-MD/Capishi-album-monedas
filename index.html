@@ -1173,7 +1173,10 @@
 
       <div class="camera-controls">
         <button class="btn-cam-capture" id="btn-snap-coin" onclick="captureAndAnalyzeCoin()">
-          📸 Capturar Moneda
+          📸 Identificar con Gemini
+        </button>
+        <button class="btn-cam-secondary" id="btn-fast-coin" onclick="captureAndReadCoinLocally()" title="Lee el año y las letras de la moneda en tu navegador; no depende de Gemini">
+          ⚡ Leer foto sin Gemini
         </button>
         <button class="btn-cam-secondary" id="btn-retake-coin" onclick="resetCameraStream()" style="display:none;">
           🔄 Otra foto
@@ -1549,6 +1552,94 @@
 
     function configureApiKey() {
       alert('La clave de Gemini ya está guardada de forma privada en Cloudflare. No necesitas introducirla aquí.');
+    }
+
+    // Segundo modo: OCR local en el navegador. No usa claves ni el Worker.
+    // La primera vez debe descargar el motor y diccionario OCR desde un CDN.
+    let capishiOcrWorker = null;
+    let capishiOcrBusy = false;
+    async function capishiLoadOcrScript() {
+      if (window.Tesseract) return;
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('No se pudo descargar el lector OCR. Comprueba tu conexión.'));
+        document.head.appendChild(script);
+      });
+    }
+    function capishiCaptureFrame() {
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      if (video.videoWidth && video.videoHeight) {
+        const cropSize = Math.floor(Math.min(video.videoWidth, video.videoHeight) * 0.82);
+        const x = Math.floor((video.videoWidth - cropSize) / 2);
+        const y = Math.floor((video.videoHeight - cropSize) / 2);
+        canvas.width = 800;
+        canvas.height = 800;
+        canvas.getContext('2d').drawImage(video, x, y, cropSize, cropSize, 0, 0, 800, 800);
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        document.getElementById('btn-snap-coin').style.display = 'none';
+        document.getElementById('btn-retake-coin').style.display = 'inline-block';
+        return canvas;
+      }
+      // Si el usuario ya capturó una imagen, se puede analizar otra vez sin abrir cámara.
+      if (canvas.width && canvas.height) return canvas;
+      throw new Error('Espera a que la cámara cargue.');
+    }
+    async function captureAndReadCoinLocally() {
+      if (capishiOcrBusy) return;
+      const pill = document.getElementById('camera-status-pill');
+      const resultsBox = document.getElementById('scanner-results');
+      const button = document.getElementById('btn-fast-coin');
+      capishiOcrBusy = true;
+      button.disabled = true;
+      try {
+        const canvas = capishiCaptureFrame();
+        pill.textContent = '⚡ Leyendo letras y año en el dispositivo...';
+        resultsBox.textContent = 'Primera vez: descargando lector de texto. Después las lecturas suelen ser más rápidas.';
+        await capishiLoadOcrScript();
+        if (!capishiOcrWorker) capishiOcrWorker = await window.Tesseract.createWorker('eng');
+        const output = await capishiOcrWorker.recognize(canvas);
+        const raw = (output?.data?.text || '').trim();
+        const normalized = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const yearMatches = [...normalized.matchAll(/\b(1[789]\d{2}|20\d{2})\b/g)].map(x=>x[1]);
+        const year = yearMatches.find(y=>Number(y) <= new Date().getFullYear()) || '';
+        const tokens = normalized.match(/[a-z]{3,}/g) || [];
+        const ignored = new Set(['united','states','america','liberty','trust','god','we','in','e','pluribus','unum','quarter','dollar','cent','cents','one','five','ten','twenty','twentyfive','half','of','the','and','mint']);
+        let bestCoin = null;
+        let bestScore = 0;
+        albums.forEach(album => album.coins.forEach(coin => {
+          const name = String(coin.name || '').toLowerCase();
+          let score = 0;
+          for (const word of tokens) {
+            if (!ignored.has(word) && name.includes(word)) score += Math.min(word.length, 12);
+          }
+          if (year && String(coin.year) === year) score += 4;
+          if (score > bestScore) { bestCoin = coin; bestScore = score; }
+        }));
+        const hasNameEvidence = bestScore >= 7 && tokens.some(t=>t.length>=4 && !ignored.has(t) && String(bestCoin?.name||'').toLowerCase().includes(t));
+        const guess = hasNameEvidence ? [year, bestCoin.name].filter(Boolean).join(' ') : year;
+        document.getElementById('scanner-input').value = guess;
+        runScannerMatcher();
+        const textPreview = raw.replace(/\s+/g, ' ').slice(0, 160);
+        if (guess) {
+          pill.textContent = '⚡ Texto detectado: ' + guess + ' (verifica el resultado)';
+          if (!hasNameEvidence) {
+            resultsBox.insertAdjacentHTML('afterbegin','<div style="font-size:0.79rem;padding:9px;text-align:center;color:var(--text-muted);">Se encontró el año, pero no un diseño seguro. Escribe el estado o nombre para afinar los resultados.</div>');
+          }
+        } else {
+          pill.textContent = '⚠️ No pude distinguir el año. Intenta con más luz o escribe los datos.';
+          resultsBox.textContent = 'No se leyó un año confiable. Texto encontrado: ' + (textPreview || 'ninguno') + '. Escribe el año o nombre abajo para buscar en tus álbumes al instante.';
+        }
+      } catch(e) {
+        pill.textContent = '⚠️ No se pudo leer el texto de esta imagen.';
+        resultsBox.textContent = e.message + ' Puedes escribir el año o nombre abajo sin depender de la IA.';
+      } finally {
+        capishiOcrBusy = false;
+        button.disabled = false;
+      }
     }
 
     async function captureAndAnalyzeCoin() {
