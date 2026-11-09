@@ -1548,7 +1548,7 @@
     }
 
     function configureApiKey() {
-      alert('La clave de Gemini ya no se introduce en esta página.\n\nPrimero configura tu Cloudflare Worker y pega su URL en la constante GEMINI_WORKER_URL del archivo index.html. La clave privada se guardará como Secret en Cloudflare.');
+      alert('La clave de Gemini ya está guardada de forma privada en Cloudflare. No necesitas introducirla aquí.');
     }
 
     async function captureAndAnalyzeCoin() {
@@ -1604,27 +1604,64 @@
           '{"year": "año", "name": "nombre_o_estado", "denomination": "valor", "search_terms": "año nombre"}'
         ].join('\n');
 
-        // La página envía la foto al Worker. La clave privada de Gemini nunca llega al navegador.
-        const response = await fetch(GEMINI_WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageBase64: base64Data,
-            mimeType: 'image/jpeg',
-            promptText: promptText
-          })
+        // La clave privada permanece únicamente en Cloudflare.
+        // Tiempo máximo por intento y dos reintentos si falla temporalmente.
+        const payload = JSON.stringify({
+          imageBase64: base64Data,
+          mimeType: 'image/jpeg',
+          promptText: promptText
         });
+        let data = null;
+        const retries = 2;
+        const perAttemptTimeoutMs = 18000;
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          if (attempt > 0) {
+            const delay = attempt === 1 ? 1500 : 3000;
+            pill.textContent = '⏳ Servicio ocupado: reintento ' + attempt + ' de ' + retries;
+            resultsBox.textContent = 'Gemini está ocupado. Reintentando automáticamente...';
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), perAttemptTimeoutMs);
+          let response;
+          let timedOut = false;
+          try {
+            response = await fetch(GEMINI_WORKER_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload,
+              signal: controller.signal
+            });
+          } catch (networkError) {
+            timedOut = networkError && networkError.name === 'AbortError';
+            if (attempt === retries) {
+              throw new Error(timedOut
+                ? 'Gemini tardó demasiado. Se agotaron los 3 intentos (18 segundos cada uno). Intenta más tarde.'
+                : 'No se pudo conectar con Cloudflare. Comprueba tu internet e inténtalo de nuevo.');
+            }
+            if (!timedOut) throw networkError;
+            continue;
+          } finally {
+            clearTimeout(timer);
+          }
 
-        if (!response.ok) {
+          if (response.ok) {
+            data = await response.json();
+            break;
+          }
+
           let errorMsg = 'HTTP ' + response.status;
           try {
             const errData = await response.json();
             if (errData && errData.error) errorMsg += ' - ' + (errData.error.message || errData.error);
           } catch(e) {}
-          throw new Error('El servidor de IA respondió con un error: ' + errorMsg);
-        }
 
-        const data = await response.json();
+          const retryable = [429, 500, 502, 503, 504, 524].includes(response.status);
+          if (!retryable || attempt === retries) {
+            throw new Error('El servidor de IA respondió con un error: ' + errorMsg);
+          }
+        }
+        if (!data) throw new Error('Gemini no respondió después de los reintentos.');
         const rawText = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) || '';
         const cleanText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
         
@@ -1648,7 +1685,7 @@
       } catch (err) {
         console.error('Gemini Vision Error:', err);
         pill.textContent = '⚠️ Error en reconocimiento IA. Puedes escribirla abajo:';
-        resultsBox.innerHTML = '<div style="font-size:0.8rem; color:#fda4af; text-align:center; padding:10px;">No se pudo conectar con el servicio de IA (' + err.message + '). Revisa la configuración del Worker de Cloudflare.</div>';
+        resultsBox.innerHTML = '<div style="font-size:0.8rem; color:#fda4af; text-align:center; padding:10px;">No se pudo conectar con el servicio de IA (' + err.message + '). Gemini puede estar saturado; intenta nuevamente en unos minutos.</div>';
       }
     }
 
